@@ -126,7 +126,7 @@ time_data* load_time_data(void) {
   }
   if ((attach = mmap(NULL, sizeof(time_data), PROT_READ | PROT_WRITE,
                      MAP_SHARED, shm_fd, (off_t)0)) == MAP_FAILED) {
-    perror("mmap failed");
+    perror("mmap");
     exit(-1);
   }
   return (time_data*) attach;
@@ -134,7 +134,7 @@ time_data* load_time_data(void) {
 
 void unload_time_data(time_data *td) {
   if (munmap((void*) td, sizeof(time_data)) != 0) {
-    printf("could not unloadTime data");
+    perror("munmap");
     exit(-1);
   }
 }
