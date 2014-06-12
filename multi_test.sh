@@ -6,7 +6,7 @@ if [[ ! -z $remaining ]]; then
     echo "wait for all previous instances to close: $remaining";
     exit 0
 fi
-NUM_MASTER=`grep "define NUM_MASTER" utils.h | cut -d' ' -f3`
+NUM_MASTER=`grep "define NUM_MASTER" sim_time.h | cut -d' ' -f3`
 rm -f ./log*.txt
 for i in `seq $NUM_MASTER`; do
     rm -f ./log_$i.txt

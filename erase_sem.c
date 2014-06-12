@@ -1,7 +1,7 @@
 #include <semaphore.h>
 #include <sys/mman.h>
 
-#include "sem_utils.h"
+#include "ipc_const.h"
 
 int main() {
   sem_unlink(sem_election_name);
