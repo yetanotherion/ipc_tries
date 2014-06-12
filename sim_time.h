@@ -22,8 +22,8 @@ typedef struct {
 } shift_request_queue;
 
 typedef struct {
-  sem_t* sem_election;
-  sem_t* sem_shift_queue;
+  sem_t *sem_election;
+  sem_t *sem_shift_queue;
   int pids[NUM_MASTER];
   int curr_pid;
 } sync_data;
@@ -34,16 +34,16 @@ typedef struct {
 } time_data;
 
 typedef struct {
-  sync_data* sd;
-  time_data* td;
+  sync_data *sd;
+  time_data *td;
 } sim_time;
 
-sim_time* init_sim_time(void);
-void set_idle(sim_time* st);
-float get_time(sim_time* st);
-void set_shift(sim_time* st, float curr_shift);
-void set_idle(sim_time* st);
-void free_sim_time(sim_time* st);
-void print_queue(sim_time * st);
+sim_time *init_sim_time(void);
+void set_idle(sim_time *st);
+float get_time(sim_time *st);
+void set_shift(sim_time *st, float curr_shift);
+void set_idle(sim_time *st);
+void free_sim_time(sim_time *st);
+void print_queue(sim_time *st);
 
 #endif /* _UTILS_H_ */

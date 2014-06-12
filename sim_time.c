@@ -1,7 +1,7 @@
 #include "sim_time.h"
 #include "ipc_const.h"
 
-int parse_pid(char* buff) {
+int parse_pid(char *buff) {
   const char slash_multi_test[] = "./multi_test", delim[] = " ";
   int pid = 0, nber_call = 0;
   char *last_buffer = NULL, *res;
@@ -19,7 +19,7 @@ int parse_pid(char* buff) {
   return pid;
 }
 
-void parse_pids(int* pids) {
+void parse_pids(int *pids) {
   char cmd[] = "ps aux | grep multi_test | grep -v bash | grep -v ps | grep -v grep";
   FILE * p = popen(cmd, "r");
   char buff[BUFF_SIZE];
@@ -47,7 +47,7 @@ void parse_pids(int* pids) {
   }
 }
 
-int comp(const void* e1, const void* e2) {
+int comp(const void *e1, const void *e2) {
   float f1 = *((float*)e1);
   float f2 = *((float*)e2);
   if (f1 < f2) return -1;
@@ -55,7 +55,7 @@ int comp(const void* e1, const void* e2) {
   return 0;
 }
 
-void enqueue(shift_request_queue* shift_queue, float curr_shift) {
+void enqueue(shift_request_queue *shift_queue, float curr_shift) {
   int nb_element = shift_queue->nb_element;
   if (nb_element == SHIFT_QUEUE_SIZE) {
     exit(1);
@@ -66,7 +66,7 @@ void enqueue(shift_request_queue* shift_queue, float curr_shift) {
         sizeof(float), comp);
 }
 
-void _print_queue(shift_request_queue* shift_queue) {
+void _print_queue(shift_request_queue *shift_queue) {
   int i;
   for (i = 0; i < shift_queue->nb_element -1; i++) {
     printf("%f,", shift_queue->queue[i]);
@@ -74,7 +74,7 @@ void _print_queue(shift_request_queue* shift_queue) {
   printf("\n");
 }
 
-float implement_shift(shift_request_queue* shift_queue) {
+float implement_shift(shift_request_queue *shift_queue) {
   int i, nb_zero=0;
   float next_shift;
   if (shift_queue->nb_element == 0) {
@@ -97,8 +97,8 @@ float implement_shift(shift_request_queue* shift_queue) {
   return next_shift;
 }
 
-sem_t* ensure_sem_open(const char* sem_name, int initial_value) {
-  sem_t * res;
+sem_t *ensure_sem_open(const char *sem_name, int initial_value) {
+  sem_t *res;
   if ((res = sem_open(sem_name, O_CREAT, 0644, initial_value)) == SEM_FAILED) {
     perror("sem_open");
     exit(-1);
@@ -106,7 +106,7 @@ sem_t* ensure_sem_open(const char* sem_name, int initial_value) {
   return res;
 }
 
-void load_sync_data(sync_data* sd) {
+void load_sync_data(sync_data *sd) {
   sd->sem_election = ensure_sem_open(sem_election_name, NUM_MASTER - 1);
   sd->sem_shift_queue = ensure_sem_open(sem_shift_queue_name, 1);
   sd->curr_pid = getpid();
@@ -132,7 +132,7 @@ time_data* load_time_data(void) {
   return (time_data*) attach;
 }
 
-void unload_time_data(time_data* td) {
+void unload_time_data(time_data *td) {
   if (munmap((void*) td, sizeof(time_data)) != 0) {
     printf("could not unloadTime data");
     exit(-1);
@@ -149,19 +149,19 @@ void wait_for_chosen_signal() {
   sigset_t mask, oldmask;
 
   /* Set up the mask of signals to temporarily block. */
-  sigemptyset (&mask);
-  sigaddset (&mask, SIGUSR1);
+  sigemptyset(&mask);
+  sigaddset(&mask, SIGUSR1);
 
   /* Wait for a signal to arrive. */
-  sigprocmask (SIG_BLOCK, &mask, &oldmask);
+  sigprocmask(SIG_BLOCK, &mask, &oldmask);
   while (!signal_called) {
-    sigsuspend (&oldmask);
+    sigsuspend(&oldmask);
   }
-  sigprocmask (SIG_UNBLOCK, &mask, NULL);
+  sigprocmask(SIG_UNBLOCK, &mask, NULL);
   signal_called = false;
 }
 
-void sync_processing(sync_data* sd, time_data* td,
+void sync_processing(sync_data *sd, time_data *td,
                      void (*sync_processing) (sync_data*, time_data*)) {
   if (sem_trywait(sd->sem_election) != 0) {
     int i;
@@ -186,23 +186,23 @@ void sync_processing(sync_data* sd, time_data* td,
   }
 }
 
-void do_sync_shift(sync_data* sd, time_data* td) {
+void do_sync_shift(sync_data *sd, time_data *td) {
    td->curr_time += implement_shift(&(td->queue));
 }
 
-void do_init_queue(sync_data* sd, time_data* td) {
+void do_init_queue(sync_data *sd, time_data *td) {
   td->queue.nb_element = 0;
 }
 
-void init_queue(sync_data* sd, time_data* td) {
+void init_queue(sync_data *sd, time_data *td) {
   sync_processing(sd, td, &do_init_queue);
 }
 
 
-sim_time* init_sim_time() {
+sim_time *init_sim_time() {
   sync_data *sd;
   time_data *td;
-  sim_time* st;
+  sim_time *st;
 
   if ((sd = (sync_data*) malloc(sizeof(sync_data))) == NULL) {
     perror("malloc");
@@ -240,7 +240,7 @@ void set_idle(sim_time *st) {
 }
 
 void free_sim_time(sim_time *st) {
-  sync_data* sd = st->sd;
+  sync_data *sd = st->sd;
   unload_time_data(st->td);
   sem_close(sd->sem_election);
   sem_close(sd->sem_shift_queue);
