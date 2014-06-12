@@ -36,9 +36,10 @@ typedef struct {
 typedef struct {
   sync_data *sd;
   time_data *td;
+  char* progname;
 } sim_time;
 
-sim_time *init_sim_time(void);
+sim_time *init_sim_time(const char *progname);
 void set_idle(sim_time *st);
 float get_time(sim_time *st);
 void set_shift(sim_time *st, float curr_shift);

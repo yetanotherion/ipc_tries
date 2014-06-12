@@ -1,8 +1,8 @@
 #include "sim_time.h"
 #include "ipc_const.h"
 
-int parse_pid(char *buff) {
-  const char slash_multi_test[] = "./multi_test", delim[] = " ";
+int parse_pid(char *buff, char *progname) {
+  const char delim[] = " ";
   int pid = 0, nber_call = 0;
   char *last_buffer = NULL, *res;
   res = strtok(buff, delim);
@@ -13,19 +13,19 @@ int parse_pid(char *buff) {
     if (last_buffer != NULL) free(last_buffer);
     last_buffer = strdup(res);
   }
-  if (strncmp(last_buffer, slash_multi_test,
-              strlen(slash_multi_test)) != 0) pid = 0;
+  if (strncmp(last_buffer, progname,
+              strlen(progname)) != 0) pid = 0;
   free(last_buffer);
   return pid;
 }
 
-void parse_pids(int *pids) {
-  char cmd[] = "ps aux | grep multi_test | grep -v bash | grep -v ps | grep -v grep";
+void parse_pids(int *pids, char *progname) {
+  char cmd[] = "ps aux";
   FILE * p = popen(cmd, "r");
   char buff[BUFF_SIZE];
   int i = 0, res;
   while (fgets(buff, BUFF_SIZE - 1, p) != NULL) {
-    if ((res = parse_pid(buff)) != 0) {
+    if ((res = parse_pid(buff, progname)) != 0) {
       if (i == NUM_MASTER) {
         printf("too many masters\n");
         exit(-1);
@@ -43,7 +43,7 @@ void parse_pids(int *pids) {
     printf("waiting for other masters\n");
     sleep_time = (sleep_time > 0) ? sleep_time : 1;
     sleep(sleep_time);
-    parse_pids(pids);
+    parse_pids(pids, progname);
   }
 }
 
@@ -106,11 +106,11 @@ sem_t *ensure_sem_open(const char *sem_name, int initial_value) {
   return res;
 }
 
-void load_sync_data(sync_data *sd) {
+void load_sync_data(sync_data *sd, char *progname) {
   sd->sem_election = ensure_sem_open(sem_election_name, NUM_MASTER - 1);
   sd->sem_shift_queue = ensure_sem_open(sem_shift_queue_name, 1);
   sd->curr_pid = getpid();
-  parse_pids(sd->pids);
+  parse_pids(sd->pids, progname);
 }
 
 time_data* load_time_data(void) {
@@ -199,7 +199,7 @@ void init_queue(sync_data *sd, time_data *td) {
 }
 
 
-sim_time *init_sim_time() {
+sim_time *init_sim_time(const char* progname) {
   sync_data *sd;
   time_data *td;
   sim_time *st;
@@ -212,9 +212,13 @@ sim_time *init_sim_time() {
     perror("malloc");
     exit(-1);
   }
+  if ((st->progname = strdup(progname)) == NULL) {
+    perror("strdup");
+    exit(-1);
+  }
   signal(SIGUSR1, sighandler);
   /* this can be long, should find a better way to do so */
-  load_sync_data(sd);
+  load_sync_data(sd, st->progname);
   printf("master are synced\n");
   td = load_time_data();
   printf("shared mem loaded\n");
@@ -245,6 +249,7 @@ void free_sim_time(sim_time *st) {
   sem_close(sd->sem_election);
   sem_close(sd->sem_shift_queue);
   free(sd);
+  free(st->progname);
   free(st);
 }
 
